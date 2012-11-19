@@ -19,6 +19,8 @@ struct ads7846_platform_data {
 	bool	keep_vref_on;		/* set to keep vref on for differential
 					 * measurements as well */
 	bool	swap_xy;		/* swap x and y axes */
+	bool	invert_x;		/* invert x axis value */
+	bool	invert_y;		/* invert y axis value */
 
 	/* Settling time of the analog signals; a function of Vcc and the
 	 * capacitance on the X/Y drivers.  If set to non-zero, two samples

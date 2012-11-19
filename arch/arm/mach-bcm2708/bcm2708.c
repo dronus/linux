@@ -32,6 +32,9 @@
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/spi/spi.h>
+#include <linux/gpio.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/ads7846.h>
 #include <linux/w1-gpio.h>
 
 #include <linux/version.h>
@@ -580,14 +583,33 @@ static struct platform_device bcm2708_spi_device = {
 	.resource = bcm2708_spi_resources,
 };
 
+static struct ads7846_platform_data ads7846_config = {
+	.x_max			= 0x0fff,
+	.y_max			= 0x0fff,
+	.x_plate_ohms		= 180,
+	.pressure_max		= 255,
+	.debounce_max		= 10,
+	.debounce_tol		= 3,
+	.debounce_rep		= 1,
+	.gpio_pendown		= 17,
+	.keep_vref_on		= 1,
+	.swap_xy                = true,
+	.invert_x		= true
+};
+
 static struct spi_board_info bcm2708_spi_devices[] = {
 	{
-		.modalias = "spidev",
-		.max_speed_hz = 500000,
-		.bus_num = 0,
-		.chip_select = 0,
-		.mode = SPI_MODE_0,
-	}, {
+		// ads7846 touchscreen on chipsel=0 device
+		.modalias		= "ads7846",
+		.bus_num		= 0,
+		.chip_select		= 0,
+		.max_speed_hz           = 500000,
+//		.controller_data	= &ads7846_mcspi_config,
+		.irq			= GPIO_IRQ_START+17,
+		.platform_data		= &ads7846_config,
+		.mode = SPI_MODE_0
+	},
+	{
 		.modalias = "spidev",
 		.max_speed_hz = 500000,
 		.bus_num = 0,
@@ -707,6 +729,10 @@ void __init bcm2708_init(void)
 	for (i = 0; i < ARRAY_SIZE(bcm2708_alsa_devices); i++)
 		bcm_register_device(&bcm2708_alsa_devices[i]);
 
+
+	// the spi device with csel=0 is now tied to the ads7846,
+	// so it is registered here too, and only csel=1 is left 
+	// for spidev use.
 	bcm_register_device(&bcm2708_spi_device);
 	bcm_register_device(&bcm2708_bsc0_device);
 	bcm_register_device(&bcm2708_bsc1_device);
